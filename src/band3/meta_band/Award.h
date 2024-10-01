@@ -13,7 +13,7 @@ public:
 class Award {
     Award(DataArray *, int);
     virtual ~Award();
-    void Configure(DataArray *);
+    virtual void Configure(DataArray *);
     Symbol GetName() const;
     Symbol GetDescription() const;
     Symbol GetDisplayName() const;

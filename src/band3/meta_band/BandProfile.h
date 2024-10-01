@@ -3,6 +3,8 @@
 
 #include "system/meta/Profile.h"
 #include "game/Defines.h"
+#include "band3/net_band/RockCentral.h"
+#include "system/obj/Msg.h"
 #include <vector>
 #include "StandIn.h"
 #include "ProfileAssets.h"
@@ -16,9 +18,12 @@ class PerformanceData;
 class PatchDescriptor;
 class LocalSavedSetlist;
 class Stats;
-class RockCentralOpCompleteMsg;
 class LocalBandUser;
 class ProfilePicture;
+
+BEGIN_MESSAGE(RockCentralOpCompleteMsg, rock_central_op_complete_msg, int);
+    MESSAGE_ARRAY_CTOR(RockCentralOpCompleteMsg)
+END_MESSAGE;
 
 class BandProfile : public Profile, virtual Hmx::Object {
 public:

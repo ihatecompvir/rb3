@@ -8,10 +8,12 @@
 
 Award::Award(DataArray *configure, int index)
     : mName(gNullStr), mIcon(gNullStr), mIsSecret(false), mIsBonus(false), mIndex(index) {
-
+    Configure(configure);
 }
 
-Award::~Award() {}
+Award::~Award() {
+    
+}
 
 class AssetMgr {};
 
