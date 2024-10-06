@@ -11,19 +11,19 @@
 
 class BandTrack : public virtual Hmx::Object {
 public:
-    BandTrack(Hmx::Object*);
+    BandTrack(Hmx::Object *);
     OBJ_CLASSNAME(BandTrack);
     OBJ_SET_TYPE(BandTrack);
-    virtual DataNode Handle(DataArray*, bool);
-    virtual bool SyncProperty(DataNode&, DataArray*, int, PropOp);
-    virtual void Save(BinStream&);
-    virtual void Copy(const Hmx::Object*, Hmx::Object::CopyType);
-    virtual void Load(BinStream&);
+    virtual DataNode Handle(DataArray *, bool);
+    virtual bool SyncProperty(DataNode &, DataArray *, int, PropOp);
+    virtual void Save(BinStream &);
+    virtual void Copy(const Hmx::Object *, Hmx::Object::CopyType);
+    virtual void Load(BinStream &);
     virtual void Reset();
-    virtual void TrackReset(){}
+    virtual void TrackReset() {}
     virtual void ResetSmashers(bool);
     virtual void Retract(bool);
-    virtual void Extend(bool){}
+    virtual void Extend(bool) {}
     virtual void SpotlightPhraseSuccess();
     virtual void SetStreak(int, int, int, bool);
     virtual void Deploy();
@@ -35,32 +35,33 @@ public:
     virtual void SuperStreak(bool, bool);
     virtual void PeakState(bool, bool);
     virtual void SetTambourine(bool);
-    virtual void SetPlayerLocal(float){}
+    virtual void SetPlayerLocal(float) {}
     virtual void SetHasTrackerFocus(bool);
-    virtual ObjectDir* ThisDir(){ MILO_ASSERT(0, 0x8A); return 0; }
-    virtual ObjectDir* ThisDir() const; // fix ptr
-    virtual int AsGemTrackDir(){ return 0; }
-    virtual int AsVocalTrackDir(){ return 0; }
+    virtual ObjectDir *ThisDir();
+    virtual ObjectDir *ThisDir() const; // fix ptr
+    virtual int AsGemTrackDir() { return 0; }
+    virtual int AsVocalTrackDir() { return 0; }
     virtual int AsRndDir();
     virtual void RefreshStreakMeter(int, int, int);
     virtual void RefreshOverdrive(float, bool);
-    virtual void RefreshCrowdRating(float, CrowdMeterState){}
+    virtual void RefreshCrowdRating(float, CrowdMeterState) {}
     virtual void StartPulseAnims(float);
-    virtual void SetupInstrument(){}
+    virtual void SetupInstrument() {}
     virtual void SetPerformanceMode(bool);
-    virtual void SetUsed(bool b){ mInUse = b; }
+    virtual void SetUsed(bool b) { mInUse = b; }
     virtual void SetInstrument(TrackInstrument);
-    virtual void ResetEffectSelector(){}
-    virtual void SetupSmasherPlate(){}
-    virtual void ReleaseSmasherPlate(){}
-    virtual void TutorialReset(){}
-    virtual ~BandTrack(){}
+    virtual void ResetEffectSelector() {}
+    virtual void SetupSmasherPlate() {}
+    virtual void ReleaseSmasherPlate() {}
+    virtual void TutorialReset() {}
+    virtual ~BandTrack() {}
 
-    void Init(Hmx::Object*);
-    void LoadTrack(BinStream&, bool, bool, bool);
-    void CopyTrack(const BandTrack*);
+    void Init(Hmx::Object *);
+    void LoadTrack(BinStream &, bool, bool, bool);
+    void CopyTrack(const BandTrack *);
     void ResetStreakMeter();
-    void SendTrackerDisplayMessage(const Message&) const;
+    void SendTrackerDisplayMessage(const Message &) const;
+    void CombineStreakMultipliers(bool);
     void ClearFinaleHelp();
     void FillReset();
     void ResetPopup();
@@ -69,13 +70,15 @@ public:
     void PracticeReset();
     void ShowOverdriveMeter(bool);
     void SetMaxMultiplier(int);
-    BandCrowdMeter* GetCrowdMeter();
+    BandCrowdMeter *GetCrowdMeter();
     void StartFinale(unsigned int);
     void GameWon();
     void GameOver();
+    const char *GetTrackIcon() const;
     void SpotlightFail(bool);
     void SyncInstrument();
     void EnablePlayer();
+    Symbol GetInstrumentSymbol() const;
     void SetMultiplier(int);
     void CodaFail(bool);
     void CodaSuccess();
@@ -84,13 +87,22 @@ public:
     void PlayerSaved();
     void FailedTask(bool, int);
     bool HasNetPlayer() const;
+    TrackPanelDirBase *MyTrackPanelDir();
     bool HasLocalPlayer() const;
     int GetPlayerDifficulty() const;
+    Symbol GetPlayerDifficultySym() const;
+    void SetBandMultiplier(int);
     void SetCrowdRating(float, CrowdMeterState);
+    void SetNetTalking(bool);
+    void ResetPlayerFeedback();
     void SetSuppressSoloDisplay(bool);
+    void SetControllerType(const Symbol &);
     void DropIn();
     void DropOut();
+    void SoloEnd(int, Symbol);
     void SoloHide();
+    void SoloHit(int);
+    void SoloStart();
     void UnisonEnd();
     void UnisonStart();
 
@@ -136,5 +148,5 @@ public:
     bool mShowOverDriveMeter; // 0x108
     bool mShowCrowdMeter; // 0x109
     int mTrackIdx; // 0x10c
-    Symbol unk110; // 0x110
+    Symbol mControllerType; // 0x110
 };

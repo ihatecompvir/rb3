@@ -1,4 +1,5 @@
 #include "bandobj/BandTrack.h"
+#include "system/ui/UILabel.h"
 #include "utl/Symbols.h"
 #include "utl/Messages.h"
 #include <os/Debug.h>
@@ -7,8 +8,8 @@ INIT_REVS(BandTrack);
 
 BandTrack::BandTrack(Hmx::Object *o)
     : mDisabled(0), mSimulatedNet(0), mInstrument(""), unk14(4), unk18(0), unk19(0),
-      unk1a(0), unk1b(0), unk1c(0), mInUse(0), unk1e(0), mSoloDisplay(0), mPlayerIntro(o, 0),
-      mStarPowerMeter(o, 0), mStreakMeter(o, 0), mPopupObject(o, 0),
+      unk1a(0), unk1b(0), unk1c(0), mInUse(0), unk1e(0), mSoloDisplay(0),
+      mPlayerIntro(o, 0), mStarPowerMeter(o, 0), mStreakMeter(o, 0), mPopupObject(o, 0),
       mPlayerFeedback(o, 0), mFailedFeedback(o, 0), mUnisonIcon(o, 0), unk74(""),
       unk78(0), mEndgameFeedback(o, 0), unk88(0), unk8c(0), mParent(o, 0),
       mRetractTrig(o, 0), mResetTrig(o, 0), mDeployTrig(o, 0), mStopDeployTrig(o, 0),
@@ -101,6 +102,14 @@ void BandTrack::ResetStreakMeter() {
         }
         SetStreak(0, 1, 1, true);
     }
+}
+
+void BandTrack::SetBandMultiplier(int multiplier) {
+    if (multiplier <= 0)
+        return;
+    if (mStreakMeter == nullptr)
+        return;
+    mStreakMeter->SetBandMultiplier(multiplier);
 }
 
 void BandTrack::Reset() {
@@ -325,6 +334,14 @@ void BandTrack::StartFinale(unsigned int ui) {
     }
 }
 
+void BandTrack::StartPulseAnims(float anim) {
+    if (mBeatAnimsGrp != 0) {
+        mBeatAnimsGrp->Animate(
+            0.0f, false, anim, RndAnimatable::k480_fpb, 0.0f, 960.0f, 0.0f, 1.0f, loop
+        );
+    }
+}
+
 void BandTrack::GameWon() {
     if (mPlayerFeedback) {
         mPlayerFeedback->HandleType(reset_msg);
@@ -346,7 +363,7 @@ void BandTrack::GameOver() {
 BandCrowdMeter *BandTrack::GetCrowdMeter() {
     BandCrowdMeter *meter;
     if (mShowCrowdMeter != false) {
-        ObjectDir* objDir = ThisDir()->mDir;
+        ObjectDir *objDir = ThisDir()->mDir;
         TrackPanelDirBase *tpDirBase = dynamic_cast<TrackPanelDirBase *>(objDir);
         meter = tpDirBase->GetCrowdMeter();
     } else {
@@ -360,9 +377,104 @@ void BandTrack::SetSuppressSoloDisplay(bool b) {
     mSoloDisplay = b;
 }
 
+Symbol BandTrack::GetInstrumentSymbol() const {
+    return mInstrument;
+}
+
+Symbol BandTrack::GetPlayerDifficultySym() const {
+    if (!mParent) {
+        return gNullStr;
+    } else {
+        return mParent->GetPlayerDifficultySym();
+    }
+
+    return Symbol();
+}
+
+void BandTrack::SoloEnd(int soloScore, Symbol soloRatingSym) {
+    if((unk1e == false) && (mSoloDisplay == false)) {
+        if (mPlayerFeedback) {
+            BandLabel * soloRatingLabel = mPlayerFeedback->Find<BandLabel>("solo_rating.lbl", true);
+            soloRatingLabel->SetTextToken(soloRatingSym);
+            UILabel * scoreLabel = mPlayerFeedback->Find<UILabel>("score.lbl", true);
+            scoreLabel->SetInt(soloScore, true);
+            mPlayerFeedback->HandleType(end_solo_msg);
+        }
+        EventTrigger* gtrSoloStopTrigger = ThisDir()->Find<EventTrigger>("guitar_solo_stop.trig", false);
+        if (gtrSoloStopTrigger) {
+            gtrSoloStopTrigger->Trigger();
+        }
+
+    }
+}
+
+void BandTrack::SoloHit(int hit) {
+    if ((mPlayerFeedback != nullptr) && (unk1e == false) && (mSoloDisplay == false)) {
+        UILabel *soloHitAnim = mPlayerFeedback->Find<UILabel>("solo_percent.lbl", true);
+        DataNode hitNode = DataNode(hit);
+        DataNode symNode = DataNode(me_percent_format);
+        DataArray *array = new DataArray(2);
+        array->Node(0) = symNode;
+        array->Node(1) = hitNode;
+        soloHitAnim->SetTokenFmt(array);
+        short refs = array->mRefs - 1;
+        if (refs == 0) {
+            delete array;
+        }
+    }
+}
+
+void BandTrack::SoloStart() {
+    if (unk1e == false && mSoloDisplay == false) {
+        if (mPlayerFeedback) {
+            mPlayerFeedback->HandleType(start_solo_msg);
+        }
+        EventTrigger *gtrSoloTrigger =
+            ThisDir()->Find<EventTrigger>("guitar_solo_start.trig", false);
+        if (gtrSoloTrigger) {
+            gtrSoloTrigger->Trigger();
+        }
+    }
+}
+
+void BandTrack::SetControllerType(const Symbol &sym) {
+    mControllerType = sym;
+}
+
+void BandTrack::ResetPlayerFeedback() {
+    if (mPlayerFeedback) {
+        mPlayerFeedback->HandleType(reset_msg);
+    }
+}
+
+void BandTrack::SetTambourine(bool b) {
+    return;
+}
+
+void BandTrack::CombineStreakMultipliers(bool b) {
+    if (mStreakMeter) {
+        mStreakMeter->CombineMultipliers(b);
+    }
+}
+
+const char *BandTrack::GetTrackIcon() const {
+    if (mParent) {
+        return mParent->GetTrackIcon();
+    } else {
+        return MakeString("G");
+    }
+}
+
+void BandTrack::RefreshStreakMeter(int a, int b, int c) {
+    if (mStreakMeter != 0) {
+        mStreakMeter->SetBandMultiplier(1);
+        SetStreak(a, b, c, true);
+    }
+}
+
 void BandTrack::SoloHide() {
-    if (mPlayerFeedback != 0) {
-        RndPropAnim *hideSoloAnim = ThisDir()->Find<RndPropAnim>("hide_solo.anim", true);
+    if (mPlayerFeedback) {
+        RndPropAnim *hideSoloAnim = mPlayerFeedback->Find<RndPropAnim>("hide_solo.anim", true);
         float endFrame = hideSoloAnim->EndFrame();
         hideSoloAnim->SetFrame(endFrame, 1.0f);
     }
@@ -388,6 +500,32 @@ void BandTrack::SpotlightPhraseSuccess() {
         if (dynamic_cast<TrackPanelDirBase *>(ThisDir())->GetEndingBonus()) {
         }
     }
+}
+
+bool BandTrack::HasLocalPlayer() const {
+    bool retVar = false;
+    if (mParent && mParent->HasLocalPlayer()) {
+        retVar = true;
+    }
+    return retVar;
+}
+
+bool BandTrack::HasNetPlayer() const {
+    bool retVar = false;
+    if (mParent && mParent->HasNetPlayer()) {
+        retVar = true;
+    }
+    return retVar;
+}
+
+ObjectDir *BandTrack::ThisDir() const {
+    MILO_ASSERT(0, 0x8B);
+    return 0;
+}
+
+ObjectDir *BandTrack::ThisDir() {
+    MILO_ASSERT(0, 0x8A);
+    return 0;
 }
 
 void BandTrack::FillReset() {
@@ -439,6 +577,7 @@ HANDLE_ACTION(track_reset, TrackReset())
 HANDLE_ACTION(retract, Retract(false))
 HANDLE_ACTION(immediate_retract, Retract(true))
 HANDLE_ACTION(game_won, GameWon())
+HANDLE_ACTION(game_won_finale, GameWon())
 HANDLE_ACTION(game_over, GameOver())
 HANDLE_ACTION(spotlight_fail, SpotlightFail(false))
 HANDLE_ACTION(spotlight_fail_guilty, SpotlightFail(true))
@@ -469,3 +608,15 @@ HANDLE_ACTION(setup_instrument, SetupInstrument())
 HANDLE_CHECK(0x5A9)
 END_HANDLERS
 #pragma pop
+
+BandCrowdMeter *TrackPanelDirBase::GetCrowdMeter() {
+    return 0;
+}
+
+void TrackPanelDirBase::EnablePlayer(int) {
+    return;
+}
+
+void TrackPanelDirBase::DisablePlayer(int, bool) {
+    return;
+}
